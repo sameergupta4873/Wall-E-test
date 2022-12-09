@@ -29,13 +29,14 @@
 
 typedef struct pid_const
 {
-    float kp;
-    float ki;
-    float kd;
+    float x;
+    float y;
+    float speed;
+    float angle;
     bool val_changed;
-} pid_const_t;
+} analog_const_t;
 
-pid_const_t read_pid_const();
+analog_const_t read_analog_const();
 void reset_val_changed_pid_const();
 void start_tuning_http_server();
 

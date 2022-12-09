@@ -2,7 +2,7 @@
 
 static const char *TAG = "tuning_http_server";
 static char scratch[SCRATCH_BUFSIZE];
-static pid_const_t pid_constants = {.kp = 0.9, .ki = 0, .kd = 6.5, .val_changed = true};
+static analog_const_t analog_constants = {.x = 0.9, .y = 0, .speed = 0, .angle = 0};
 
 static void initialise_mdns(void)
 {
@@ -160,14 +160,15 @@ static esp_err_t tuning_pid_post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
     
-    pid_constants.kp = (float)cJSON_GetObjectItem(root, "kp")->valuedouble;
-    pid_constants.ki = (float)cJSON_GetObjectItem(root, "ki")->valuedouble;
-    pid_constants.kd = (float)cJSON_GetObjectItem(root, "kd")->valuedouble;
+    analog_constants.x = (float)cJSON_GetObjectItem(root, "x")->valuedouble;
+    analog_constants.y = (float)cJSON_GetObjectItem(root, "y")->valuedouble;
+    analog_constants.speed = (float)cJSON_GetObjectItem(root, "speed")->valuedouble;
+    analog_constants.angle = (float)cJSON_GetObjectItem(root, "angle")->valuedouble;
 
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "Post control value successfully");
 
-    pid_constants.val_changed = true;
+    analog_constants.val_changed = true;
     return ESP_OK;
 }
 
@@ -211,14 +212,14 @@ static esp_err_t start_tuning_http_server_private()
     return ESP_OK;
 }
 
-pid_const_t read_pid_const()
+analog_const_t read_analog_const()
 {
-    return pid_constants;
+    return analog_constants;
 }
 
 void reset_val_changed_pid_const()
 {
-    pid_constants.val_changed = false;
+    analog_constants.val_changed = false;
 }
 
 void start_tuning_http_server()

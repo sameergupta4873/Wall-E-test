@@ -54,7 +54,7 @@ void calculate_correction()
 
     cumulative_error = bound(cumulative_error, -30, 30);
 
-    correction = read_pid_const().kp*error + read_pid_const().ki*cumulative_error + read_pid_const().kd*difference;
+    correction = read_analog_const().kp*error + read_analog_const().ki*cumulative_error + read_analog_const().kd*difference;
     prev_error = error;
 }
 
@@ -99,8 +99,8 @@ void calculate_error()
 void line_follow_task(void* arg)
 {
     ESP_ERROR_CHECK(enable_motor_driver(a, NORMAL_MODE));
-    ESP_ERROR_CHECK(enable_line_sensor());
-    ESP_ERROR_CHECK(enable_bar_graph());
+    // ESP_ERROR_CHECK(enable_line_sensor());
+    // ESP_ERROR_CHECK(enable_bar_graph());
 #ifdef CONFIG_ENABLE_OLED
     // Declaring the required OLED struct
     u8g2_t oled_config;
@@ -111,31 +111,31 @@ void line_follow_task(void* arg)
     
     while(true)
     {
-        line_sensor_readings = read_line_sensor();
-        for(int i = 0; i < 4; i++)
-        {
-            line_sensor_readings.adc_reading[i] = bound(line_sensor_readings.adc_reading[i], BLACK_MARGIN, WHITE_MARGIN);
-            line_sensor_readings.adc_reading[i] = map(line_sensor_readings.adc_reading[i], BLACK_MARGIN, WHITE_MARGIN, bound_LSA_LOW, bound_LSA_HIGH);
-        }
+        // line_sensor_readings = read_line_sensor();
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     line_sensor_readings.adc_reading[i] = bound(line_sensor_readings.adc_reading[i], BLACK_MARGIN, WHITE_MARGIN);
+        //     line_sensor_readings.adc_reading[i] = map(line_sensor_readings.adc_reading[i], BLACK_MARGIN, WHITE_MARGIN, bound_LSA_LOW, bound_LSA_HIGH);
+        // }
         
-        calculate_error();
-        calculate_correction();
-        lsa_to_bar();
+        // calculate_error();
+        // calculate_correction();
+        // lsa_to_bar();
         
-        left_duty_cycle = bound((optimum_duty_cycle - correction), lower_duty_cycle, higher_duty_cycle);
-        right_duty_cycle = bound((optimum_duty_cycle + correction), lower_duty_cycle, higher_duty_cycle);
+        // left_duty_cycle = bound((optimum_duty_cycle - correction), lower_duty_cycle, higher_duty_cycle);
+        // right_duty_cycle = bound((optimum_duty_cycle + correction), lower_duty_cycle, higher_duty_cycle);
 
-        set_motor_speed(MOTOR_A_0, MOTOR_FORWARD, left_duty_cycle);
-        set_motor_speed(MOTOR_A_1, MOTOR_FORWARD, right_duty_cycle);
+        // set_motor_speed(MOTOR_A_0, MOTOR_FORWARD, left_duty_cycle);
+        // set_motor_speed(MOTOR_A_1, MOTOR_FORWARD, right_duty_cycle);
 
         
         //ESP_LOGI("debug","left_duty_cycle:  %f    ::  right_duty_cycle :  %f  :: error :  %f  correction  :  %f  \n",left_duty_cycle, right_duty_cycle, error, correction);
-        ESP_LOGI("debug", "KP: %f ::  KI: %f  :: KD: %f", read_pid_const().kp, read_pid_const().ki, read_pid_const().kd);
+        ESP_LOGI("debug", "X: %f ::  Y: %f  :: SPEED: %f :: ANGLE: %f", read_analog_const().x, read_analog_const().y, read_analog_const().speed, read_analog_const().angle);
 #ifdef CONFIG_ENABLE_OLED
         // Diplaying kp, ki, kd values on OLED 
-        if (read_pid_const().val_changed)
+        if (read_analog_const().val_changed)
         {
-            display_pid_values(read_pid_const().kp, read_pid_const().ki, read_pid_const().kd, &oled_config);
+            display_pid_values(read_analog_const().x, read_analog_const().y, read_analog_const().speed, read_analog_const().angle, &oled_config);
             reset_val_changed_pid_const();
         }
 #endif
