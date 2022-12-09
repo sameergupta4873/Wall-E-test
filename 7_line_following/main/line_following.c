@@ -34,80 +34,80 @@ float error=0, prev_error=0, difference, cumulative_error, correction;
 line_sensor_array line_sensor_readings;
 
 
-void lsa_to_bar()
-{   
-    uint8_t var = 0x00;                     
-    bool number[8] = {0,0,0,0,0,0,0,0};
-    for(int i = 0; i < 4; i++)
-    {
-        number[7-i] = (line_sensor_readings.adc_reading[i] < BLACK_MARGIN) ? 0 : 1; //If adc value is less than black margin, then set that bit to 0 otherwise 1. 
-        var = bool_to_uint8(number);  //A helper function to convert bool array to unsigned int.
-        ESP_ERROR_CHECK(set_bar_graph(var)); //Setting bar graph led with unsigned int value.
-    }
-}
+// void lsa_to_bar()
+// {   
+//     uint8_t var = 0x00;                     
+//     bool number[8] = {0,0,0,0,0,0,0,0};
+//     for(int i = 0; i < 4; i++)
+//     {
+//         number[7-i] = (line_sensor_readings.adc_reading[i] < BLACK_MARGIN) ? 0 : 1; //If adc value is less than black margin, then set that bit to 0 otherwise 1. 
+//         var = bool_to_uint8(number);  //A helper function to convert bool array to unsigned int.
+//         ESP_ERROR_CHECK(set_bar_graph(var)); //Setting bar graph led with unsigned int value.
+//     }
+// }
 
-void calculate_correction()
-{
-    error = error*10;  // we need the error correction in range 0-100 so that we can send it directly as duty cycle paramete
-    difference = error - prev_error;
-    cumulative_error += error;
+// void calculate_correction()
+// {
+//     error = error*10;  // we need the error correction in range 0-100 so that we can send it directly as duty cycle paramete
+//     difference = error - prev_error;
+//     cumulative_error += error;
 
-    cumulative_error = bound(cumulative_error, -30, 30);
+//     cumulative_error = bound(cumulative_error, -30, 30);
 
-    correction = read_analog_const().kp*error + read_analog_const().ki*cumulative_error + read_analog_const().kd*difference;
-    prev_error = error;
-}
+//     correction = read_analog_const().kp*error + read_analog_const().ki*cumulative_error + read_analog_const().kd*difference;
+//     prev_error = error;
+// }
 
-void calculate_error()
-{
-    int all_black_flag = 1; // assuming initially all black condition
-    float weighted_sum = 0, sum = 0; 
-    float pos = 0;
+// void calculate_error()
+// {
+//     int all_black_flag = 1; // assuming initially all black condition
+//     float weighted_sum = 0, sum = 0; 
+//     float pos = 0;
     
-    for(int i = 0; i < 4; i++)
-    {
-        if(line_sensor_readings.adc_reading[i] > BLACK_MARGIN)
-        {
-            all_black_flag = 0;
-        }
-        weighted_sum += (float)(weights[i]) * (line_sensor_readings.adc_reading[i]);
-        sum = sum + line_sensor_readings.adc_reading[i];
-    }
+//     for(int i = 0; i < 4; i++)
+//     {
+//         if(line_sensor_readings.adc_reading[i] > BLACK_MARGIN)
+//         {
+//             all_black_flag = 0;
+//         }
+//         weighted_sum += (float)(weights[i]) * (line_sensor_readings.adc_reading[i]);
+//         sum = sum + line_sensor_readings.adc_reading[i];
+//     }
 
-    if(sum != 0) // sum can never be 0 but just for safety purposes
-    {
-        pos = weighted_sum / sum; // This will give us the position wrt line. if +ve then bot is facing left and if -ve the bot is facing to right.
-    }
+//     if(sum != 0) // sum can never be 0 but just for safety purposes
+//     {
+//         pos = weighted_sum / sum; // This will give us the position wrt line. if +ve then bot is facing left and if -ve the bot is facing to right.
+//     }
 
-    if(all_black_flag == 1)  // If all black then we check for previous error to assign current error.
-    {
-        if(prev_error > 0)
-        {
-            error = 2.5;
-        }
-        else
-        {
-            error = -2.5;
-        }
-    }
-    else
-    {
-        error = pos;
-    }
-}
+//     if(all_black_flag == 1)  // If all black then we check for previous error to assign current error.
+//     {
+//         if(prev_error > 0)
+//         {
+//             error = 2.5;
+//         }
+//         else
+//         {
+//             error = -2.5;
+//         }
+//     }
+//     else
+//     {
+//         error = pos;
+//     }
+// }
 
 void line_follow_task(void* arg)
 {
     ESP_ERROR_CHECK(enable_motor_driver(a, NORMAL_MODE));
     // ESP_ERROR_CHECK(enable_line_sensor());
     // ESP_ERROR_CHECK(enable_bar_graph());
-#ifdef CONFIG_ENABLE_OLED
-    // Declaring the required OLED struct
-    u8g2_t oled_config;
+// #ifdef CONFIG_ENABLE_OLED
+//     // Declaring the required OLED struct
+//     u8g2_t oled_config;
 
-    // Initialising the OLED
-    ESP_ERROR_CHECK(init_oled(&oled_config));
-#endif
+//     // Initialising the OLED
+//     ESP_ERROR_CHECK(init_oled(&oled_config));
+// #endif
     
     while(true)
     {
@@ -131,14 +131,14 @@ void line_follow_task(void* arg)
         
         //ESP_LOGI("debug","left_duty_cycle:  %f    ::  right_duty_cycle :  %f  :: error :  %f  correction  :  %f  \n",left_duty_cycle, right_duty_cycle, error, correction);
         ESP_LOGI("debug", "X: %f ::  Y: %f  :: SPEED: %f :: ANGLE: %f", read_analog_const().x, read_analog_const().y, read_analog_const().speed, read_analog_const().angle);
-#ifdef CONFIG_ENABLE_OLED
-        // Diplaying kp, ki, kd values on OLED 
-        if (read_analog_const().val_changed)
-        {
-            display_pid_values(read_analog_const().x, read_analog_const().y, read_analog_const().speed, read_analog_const().angle, &oled_config);
-            reset_val_changed_pid_const();
-        }
-#endif
+// #ifdef CONFIG_ENABLE_OLED
+//         // Diplaying kp, ki, kd values on OLED 
+//         if (read_analog_const().val_changed)
+//         {
+//             display_pid_values(read_analog_const().x, read_analog_const().y, read_analog_const().speed, read_analog_const().angle, &oled_config);
+//             reset_val_changed_pid_const();
+//         }
+// #endif
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
